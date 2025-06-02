@@ -1,25 +1,70 @@
-cabal-version:      3.14
-name:               masna3
-version:            0.1.0.0
--- synopsis:
--- description:
-license:            LGPL-3.0-only
-license-file:       LICENSE
-author:             Théophile Choutri de Tarlé
-maintainer:         theophile+github@choutri.eu
-category:           Concurrency
-build-type:         Simple
-extra-doc-files:    CHANGELOG.md
--- extra-source-files:
+cabal-version: 3.14
+name: masna3
+version: 0.1.0.0
+synopsis: Asynchronous job queues for Haskell applications
+license: LGPL-3.0-only
+license-file: LICENSE
+author: Masna3 Authors
+maintainer: Théophile Choutri de Tarlé <theophile+github@choutri.eu>
+category: Concurrency
+build-type: Simple
+extra-doc-files: CHANGELOG.md
 
-common warnings
-    ghc-options: -Wall
+source-repository head
+  type: git
+  location: https://github.com/tchoutri/masna3
+
+common common-extensions
+  default-extensions:
+    DeriveAnyClass
+    DerivingVia
+    DuplicateRecordFields
+    NoStarIsType
+    OverloadedLabels
+    OverloadedRecordDot
+    OverloadedStrings
+    PackageImports
+    PolyKinds
+    RecordWildCards
+    RequiredTypeArguments
+    StrictData
+    TypeFamilies
+    UndecidableInstances
+    ViewPatterns
+
+  default-language: GHC2024
+
+common common-ghc-options
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -Wredundant-constraints
+    -fhide-source-paths
+    -Wno-unused-do-bind
+    -funbox-strict-fields
+    -Wunused-packages
+    -funbox-small-strict-fields
 
 library
-    import:           warnings
-    -- cabal-gild: discover src
-    exposed-modules:  MyLib
-    build-depends:    
-        base >= 4.20.1 && < 4.21,
-    hs-source-dirs:   src
-    default-language: GHC2024
+  import: common-extensions
+  import: common-ghc-options
+  -- cabal-gild: discover src
+  exposed-modules:
+    Masna3.Backend.Redis
+    Masna3.Backend.Redis.Config
+    Masna3.Backend.Redis.Consumer
+
+  build-depends:
+    base >=4.20.1 && <4.21,
+    bytestring,
+    hedis >=7.1.0 && <7.2,
+    heptapod >=1.1.0 && <1.2,
+    resource-pool >=0.5.0 && <0.6,
+    uuid-types >=1.0.6 && <2.0,
+
+  hs-source-dirs: src
+  default-language: GHC2024

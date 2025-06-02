@@ -17,12 +17,12 @@ test: ## Run the test suite
 	@cabal test
 
 lint: ## Run the code linter (HLint)
-	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
+	@find src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
 
 style: ## Run the code styler (fourmolu and cabal-fmt)
-	@cabal-gild --mode=format --io=apothema.cabal
+	@cabal-gild --mode=format --io=masna3.cabal
 	@cabal-gild --mode=format --io=cabal.project
-	@fourmolu -q --mode inplace test src
+	@fourmolu -q --mode inplace src
 
 check:
 	@./scripts/ci-check.sh

@@ -1,7 +1,15 @@
 packages: ./
-
 with-compiler: ghc-9.10.2
-
 semaphore: True
 tests: True
 jobs: $ncpus
+
+source-repository-package
+  type: git
+  location: https://github.com/scrive/hedis
+  tag: 23a3d349d76632fe0c09099438317bceb214c480
+
+source-repository-package
+  type: git
+  location: https://github.com/scrive/pool
+  tag: eeabc8746d4fa68063551d81bf9fa330c3396845
