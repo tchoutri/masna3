@@ -1,0 +1,7 @@
+packages: ./
+
+with-compiler: ghc-9.10.2
+
+semaphore: True
+tests: True
+jobs: $ncpus
