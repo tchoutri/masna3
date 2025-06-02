@@ -8,3 +8,4 @@ data RedisBackendConfig = RedisBackendConfig
   , consumersKeyspace :: StrictByteString
   , maxSimultaneousJobs :: Word
   }
+  deriving stock (Eq, Ord, Show)
