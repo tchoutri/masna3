@@ -106,4 +106,4 @@ RUN mkdir -p /home/$USER/masna3 \
 RUN echo 'export PATH="$PATH:/home/$USER/.cabal/bin"' >> ~/.bashrc
 RUN echo "source /opt/ghcup/.ghcup/env" >> ~/.bashrc
 RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
-RUN direnv allow
+RUN echo 'direnv allow' >> ~/.bashrc
