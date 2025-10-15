@@ -22,12 +22,15 @@ import Effectful.Concurrent.MVar.Strict qualified as MVar
 import Effectful.Error.Static (Error)
 import Effectful.Error.Static qualified as Error
 import Effectful.Exception
+import Effectful.FileSystem
 import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.PostgreSQL (WithConnection)
 import Effectful.PostgreSQL qualified as DB
 import Effectful.Reader.Static (Reader)
 import Effectful.Reader.Static qualified as Reader
+import Effectful.State.Static.Shared (State)
+import Effectful.State.Static.Shared qualified as State
 import Effectful.Time (Time)
 import Effectful.Time qualified as Time
 import Env qualified
@@ -36,18 +39,21 @@ import Log.Backend.LogList qualified as Log
 import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Network.HTTP.Types (statusCode)
 import Servant.Client
+import System.FilePath ((</>))
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit qualified as Test
 
 import Masna3.Server.Config
 import Masna3.Server.Environment
 import Masna3.Server.Error
+import Masna3.Test.StructuredOutput
 
 type TestEff a =
   Eff
     '[ Time
      , Error Masna3Error
      , Reader TestEnv
+     , State OutputTable
      , Log
      , Concurrent
      , IOE
@@ -73,15 +79,21 @@ testThis env name assertion = Test.testCase (Text.unpack name) $ do
             Text.putStrLn $ "Logs from tests: " <> name <> ":"
             logs <- Log.getLogList logList
             forM_ logs (Text.putStrLn . Log.showLogMessage Nothing)
+        defaultTable = OutputTable name empty empty
     do
       -- bracket_ insertList deleteList $ do
       Log.withLogListLogger logList $ \logger -> do
-        assertion
-          & Time.runTime
-          & Error.runErrorWith handleTestSuiteError
-          & Reader.runReader env
-          & Log.runLog "masna3-test" logger Log.defaultLogLevel
-          & (`onException` displayLogsOnException)
+        finalState <-
+          assertion
+            & Time.runTime
+            & Error.runErrorWith handleTestSuiteError
+            & Reader.runReader env
+            & State.execState defaultTable
+            & Log.runLog "masna3-test" logger Log.defaultLogLevel
+            & (`onException` displayLogsOnException)
+        runFileSystem $ do
+          baseDir <- getCurrentDirectory
+          writeTable (baseDir </> ".." </> "dist-newstyle/tmp") finalState
   where
     handleTestSuiteError :: IOE :> es => CallStack -> Masna3Error -> Eff es a
     handleTestSuiteError callstack err = do
