@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module Masna3.Test.File where
 
 import Masna3.Api.Client qualified as Client
@@ -6,6 +8,7 @@ import Test.Tasty
 
 import Masna3.Server.Model.Owner.Types
 import Masna3.Server.Model.Owner.Update qualified as Update
+import Masna3.Test.StructuredOutput
 import Masna3.Test.Utils
 
 spec :: TestEnv -> TestTree
@@ -38,11 +41,16 @@ testConfirmFile = do
 
 testConfirmFileInvalidTransition :: TestEff ()
 testConfirmFileInvalidTransition = do
+  setHeader ["Operation", "Status"]
   owner <- newOwner "test-client-3"
   withTestPool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
   let form = FileRegistrationForm fileName owner.ownerId mimeType
   result <- assertRight "Register file" =<< runRequest (Client.registerFile form)
-  void $ assertRight "Confirm File" =<< runRequest (Client.confirmFile result.fileId)
-  void $ assertLeftWithStatus "Confirm File" 500 =<< runRequest (Client.confirmFile result.fileId)
+  do
+    void $ assertRight "Confirm File" =<< runRequest (Client.confirmFile result.fileId)
+    addRow ["Confirm file", "✅"]
+  do
+    assertLeftWithStatus "Confirm File" 500 =<< runRequest (Client.confirmFile result.fileId)
+    addRow ["Double-confirm file", "❌"]
