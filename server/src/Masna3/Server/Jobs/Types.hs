@@ -4,6 +4,7 @@ import BackgroundJobs.Poller
 import BackgroundJobs.Poller qualified as Poller
 import BackgroundJobs.Worker
 import Data.Aeson
+import Data.Time
 import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.Newtypes
 import Database.PostgreSQL.Simple.ToField
@@ -58,7 +59,7 @@ processJob
 processJob = \case
   PurgeExpiredFiles -> do
     now <- Time.currentTime
-    files <- Query.listExpiredFiles now
+    files <- Query.listExpiredFiles ((60 * 60 * 24) `addUTCTime` now)
     Log.logInfo "Expired files" $
       object ["amount" .= length files]
     forM_ files $ \file ->

@@ -3,14 +3,20 @@ module Masna3.Test.File where
 import BackgroundJobs.Job qualified as Job
 import BackgroundJobs.Poller qualified as Poller
 import BackgroundJobs.Queue qualified as Queue
+import BackgroundJobs.Worker
+import Data.Aeson
 import Effectful.Concurrent
 import Effectful.Concurrent.Async qualified as Async
+import Effectful.Log qualified as Log
+import Effectful.Time qualified as Time
 import Masna3.Api.Client qualified as Client
 import Masna3.Api.File
 import Test.Tasty
 
 import Masna3.Server.Jobs.Types
 import Masna3.Server.Model.File.Query qualified as Query
+import Masna3.Server.Model.File.Types
+import Masna3.Server.Model.File.Update qualified as Update
 import Masna3.Server.Model.Owner.Types
 import Masna3.Server.Model.Owner.Update qualified as Update
 import Masna3.Test.Utils
@@ -83,6 +89,17 @@ testDeleteFileInvalidTransition = do
 testUnconfirmedFileGetsTrashed :: TestEff ()
 testUnconfirmedFileGetsTrashed = do
   owner <- newOwner "test-client-6"
+  let testWorkerConfig =
+        workerConfig
+          { process = \case
+              PurgeExpiredFiles -> do
+                now <- Time.currentTime
+                files <- Query.listExpiredFiles now
+                Log.logInfo "Expired files" $
+                  object ["amount" .= length files]
+                forM_ files $ \file ->
+                  Update.deleteFile file.fileId
+          }
   withTestPool $ Update.insertOwner owner
   let fileName = "file-to-delete.txt"
       mimeType = "text/plain"
@@ -93,7 +110,7 @@ testUnconfirmedFileGetsTrashed = do
     Queue.createQueue "masna3_jobs"
     Job.insertJob "masna3_jobs" PurgeExpiredFiles
   Async.race_
-    (withTestPool (Poller.monitorQueue pollerConfig workerConfig))
+    (withTestPool (Poller.monitorQueue pollerConfig testWorkerConfig))
     ( do
         threadDelay 500_000
         r <- withTestPool (Query.getFileById result.fileId)
