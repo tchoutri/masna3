@@ -66,6 +66,7 @@ library
   -- cabal-gild: discover src
   exposed-modules:
     BackgroundJobs.Job
+    BackgroundJobs.Metrics
     BackgroundJobs.Poller
     BackgroundJobs.Queue
     BackgroundJobs.Worker
