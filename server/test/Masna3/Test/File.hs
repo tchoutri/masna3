@@ -1,10 +1,13 @@
 module Masna3.Test.File where
 
-import BackgroundJobs.Job qualified as Job
-import BackgroundJobs.Poller qualified as Poller
-import BackgroundJobs.Queue qualified as Queue
+import Arbiter.Simple qualified as ArbS
+import Arbiter.Worker qualified as Worker
+import Data.Proxy
 import Effectful.Concurrent
 import Effectful.Concurrent.Async qualified as Async
+import Effectful.Reader.Static qualified as Reader
+import Log.Class
+import Log.Logger (LoggerEnv (..))
 import Masna3.Api.Client qualified as Client
 import Masna3.Api.File
 import Test.Tasty
@@ -14,6 +17,10 @@ import Masna3.Server.Model.File.Query qualified as Query
 import Masna3.Server.Model.Owner.Types
 import Masna3.Server.Model.Owner.Update qualified as Update
 import Masna3.Test.Utils
+
+type TestQueue =
+  '[ '("file_queue", Masna3Job)
+   ]
 
 spec :: TestEnv -> TestTree
 spec env =
@@ -82,18 +89,18 @@ testDeleteFileInvalidTransition = do
 
 testUnconfirmedFileGetsTrashed :: TestEff ()
 testUnconfirmedFileGetsTrashed = do
+  env <- Reader.ask
   owner <- newOwner "test-client-6"
+  logger <- leLogger <$> getLoggerEnv
   withTestPool $ Update.insertOwner owner
   let fileName = "file-to-delete.txt"
       mimeType = "text/plain"
   let form = FileRegistrationForm fileName owner.ownerId mimeType
   result <- assertRight "Register file" =<< runRequest (Client.registerFile form)
-
-  withTestPool $ do
-    Queue.createQueue "masna3_jobs"
-    Job.insertJob "masna3_jobs" PurgeExpiredFiles
+  arbiterEnv <- ArbS.createSimpleEnv (Proxy @TestQueue) env.connString "public"
+  arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob logger)
   Async.race_
-    (withTestPool (Poller.monitorQueue pollerConfig workerConfig))
+    (liftIO $ ArbS.runSimpleDb arbiterEnv $ Worker.runWorkerPool arbiterWorkerConfig)
     ( do
         threadDelay 500_000
         r <- withTestPool (Query.getFileById result.fileId)

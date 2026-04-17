@@ -160,4 +160,5 @@ getTestEnv = do
           { pool = pool
           , httpPort = config.httpPort
           , logSemaphore = logSemaphore
+          , connString = config.connectionInfo
           }

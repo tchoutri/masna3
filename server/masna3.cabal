@@ -50,6 +50,7 @@ common ghc-options
 
 common rts-options
   ghc-options:
+    -fplugin=Effectful.Plugin
     -rtsopts
     -threaded
     "-with-rtsopts=-N -T"
@@ -79,6 +80,9 @@ library
     aeson,
     amazonka,
     amazonka-s3,
+    arbiter-core,
+    arbiter-simple,
+    arbiter-worker,
     background-jobs,
     base >=4.20 && <4.21,
     biscuit-haskell,
@@ -122,10 +126,17 @@ executable masna3-server
   hs-source-dirs: app
   build-depends:
     aeson,
+    arbiter-core,
+    arbiter-servant,
+    arbiter-servant-ui,
+    arbiter-simple,
+    arbiter-worker,
     background-jobs,
     base,
     containers,
     effectful,
+    effectful-core,
+    effectful-plugin,
     effectful-postgresql,
     log-base,
     log-effectful,
@@ -134,6 +145,9 @@ executable masna3-server
     monad-time-effectful,
     optics-core,
     text,
+    time,
+    wai,
+    warp,
 
   mixins:
     base hiding (Prelude),
@@ -153,12 +167,16 @@ test-suite masna3-test
 
   build-depends:
     aeson,
+    arbiter-core,
+    arbiter-simple,
+    arbiter-worker,
     background-jobs,
     base,
     bytestring,
     containers,
     effectful,
     effectful-core,
+    effectful-plugin,
     effectful-postgresql,
     envparse,
     http-client,

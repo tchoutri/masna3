@@ -5,7 +5,7 @@ start: ## Start the masna3 server
 	@cabal run masna3
 
 build: ## Build the project
-	@cabal build all
+	@cabal build all -O0
 
 clean: gleam-clean ## Remove compilation artifacts
 	@cabal clean
@@ -51,7 +51,7 @@ docker-build: ## Build and start the container cluster
 	@docker compose build devel
 
 docker-up: ## Start the container cluster
-	@docker compose up -d --build
+	@docker compose up -d
 
 docker-stop: ## Stop the container cluster without removing the containers
 	@docker compose stop
@@ -84,6 +84,7 @@ db-init: ## Create the database schema
 	@migrate init "$(MASNA3_DB_CONNSTRING)"
 
 db-migrate: ## Apply database migrations
+	@cabal run background-jobs-migrate
 	@migrate migrate "$(MASNA3_DB_CONNSTRING)" migrations
 
 db-reset: db-drop db-setup ## Reset the dev database

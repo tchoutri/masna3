@@ -20,11 +20,10 @@ allow-newer:
   amazonka-s3:*,
   amazonka:*,
   pg-entity:*,
+  arbiter-worker:random,
 
-source-repository-package
-  type: git
-  location: https://github.com/scrive/pool
-  tag: eeabc8746d4fa68063551d81bf9fa330c3396845
+allow-older:
+  arbiter-worker:random,
 
 source-repository-package
   type: git
@@ -44,3 +43,15 @@ source-repository-package
     ./lib/services/amazonka-s3
     ./lib/services/amazonka-sso
     ./lib/services/amazonka-sts
+
+source-repository-package
+  type: git
+  location: https://github.com/velveteer/arbiter.git
+  tag: ea45e4563991d58e5a3e93576f61cd30ca7e195d
+  subdir:
+    arbiter-core
+    arbiter-worker
+    arbiter-simple
+    arbiter-migrations
+    arbiter-servant
+    arbiter-servant-ui

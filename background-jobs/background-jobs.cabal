@@ -65,13 +65,14 @@ library
   hs-source-dirs: src
   -- cabal-gild: discover src
   exposed-modules:
-    BackgroundJobs.Job
-    BackgroundJobs.Poller
-    BackgroundJobs.Queue
-    BackgroundJobs.Worker
+    BackgroundJobs.Environment
+    BackgroundJobs.FileJob
+    BackgroundJobs.Registry
 
   build-depends:
     aeson,
+    arbiter-core,
+    arbiter-worker,
     base >=4.20 && <4.21,
     bytestring,
     containers,
@@ -101,46 +102,70 @@ library
     base hiding (Prelude),
     masna3-prelude (Prelude),
 
-test-suite background-jobs-test
+executable background-jobs-migrate
   import: extensions
   import: ghc-options
   import: rts-options
-  type: exitcode-stdio-1.0
   main-is: Main.hs
-  hs-source-dirs: test
-  -- cabal-gild: discover test --exclude "test/Main.hs"
-  other-modules: BackgroundJobs.Test.Utils
+  hs-source-dirs: app/background-jobs-migrate
   build-depends:
     aeson,
+    arbiter-migrations,
     background-jobs,
     base,
-    binary,
-    bytestring,
     containers,
-    deriving-aeson,
     effectful,
-    effectful-core,
     effectful-postgresql,
-    envparse,
-    http-client,
-    http-types,
     log-base,
     log-effectful,
     masna3-prelude,
     monad-time-effectful,
-    postgresql-simple,
-    resource-pool,
-    sel,
-    servant-client,
-    strict-mutable-base,
-    tasty,
-    tasty-hunit,
+    optics-core,
     text,
-    text-display,
-    time,
-    wai-log,
-    warp,
 
   mixins:
     base hiding (Prelude),
     masna3-prelude (Prelude),
+
+-- test-suite background-jobs-test
+--   import: extensions
+--   import: ghc-options
+--   import: rts-options
+--   type: exitcode-stdio-1.0
+--   main-is: Main.hs
+--   hs-source-dirs: test
+--   -- cabal-gild: discover test --exclude "test/Main.hs"
+--   other-modules: BackgroundJobs.Test.Utils
+--   build-depends:
+--     aeson,
+--     background-jobs,
+--     base,
+--     binary,
+--     bytestring,
+--     containers,
+--     deriving-aeson,
+--     effectful,
+--     effectful-core,
+--     effectful-postgresql,
+--     envparse,
+--     http-client,
+--     http-types,
+--     log-base,
+--     log-effectful,
+--     masna3-prelude,
+--     monad-time-effectful,
+--     postgresql-simple,
+--     resource-pool,
+--     sel,
+--     servant-client,
+--     strict-mutable-base,
+--     tasty,
+--     tasty-hunit,
+--     text,
+--     text-display,
+--     time,
+--     wai-log,
+--     warp,
+--   mixins:
+--     base hiding (Prelude),
+--     masna3-prelude (Prelude),

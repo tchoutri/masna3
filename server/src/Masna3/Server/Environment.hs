@@ -17,8 +17,8 @@ import Masna3.Server.Config
 
 data Masna3Env = Masna3Env
   { pool :: Pool PG.Connection
+  , connString :: StrictByteString
   , dbConfig :: ConnectionPoolConfig
-  , jobsPool :: Pool PG.Connection
   , httpPort :: Word16
   , domain :: Text
   , mltp :: MLTP
@@ -50,13 +50,12 @@ configToEnv :: IOE :> es => Masna3Config -> Eff es Masna3Env
 configToEnv masna3Config = do
   let ConnectionPoolConfig{connectionTimeout, connections} = masna3Config.dbConfig
   pool <- mkPool masna3Config.connectionInfo connectionTimeout connections
-  jobsPool <- mkPool masna3Config.connectionInfo connectionTimeout connections
   let s3AuthEnv = AuthEnv masna3Config.awsKeyId masna3Config.awsSecret Nothing Nothing
   pure
     Masna3Env
       { pool = pool
       , dbConfig = masna3Config.dbConfig
-      , jobsPool = jobsPool
+      , connString = masna3Config.connectionInfo
       , httpPort = masna3Config.httpPort
       , domain = masna3Config.domain
       , mltp = masna3Config.mltp
