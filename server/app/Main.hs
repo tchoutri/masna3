@@ -51,8 +51,6 @@ main = runEff . runConsole . runTime . runConcurrent $ do
 
 preflightChecks
   :: ( IOE :> es
-     , Log :> es
-     , Reader Masna3Env :> es
      , Time :> es
      )
   => (ArbS.SimpleEnv AppRegistry)
