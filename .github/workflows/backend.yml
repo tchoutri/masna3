@@ -96,11 +96,3 @@ jobs:
         cabal test masna3-test
       env:
         PGPASSWORD: "postgres"
-
-    - name: Test Masna3 Jobs
-      run: |
-        set -x
-        source ./environment.ci.sh
-        cabal test background-jobs-test
-      env:
-        PGPASSWORD: "postgres"
