@@ -2,7 +2,9 @@ import gleam/list
 
 import gleeunit/should
 
-import domain/delete_file.{UserChangedFileId, UserSubmittedForm, init, update}
+import domain/file/confirm_file.{
+  UserChangedFileId, UserSubmittedForm, init, update,
+}
 
 // Validate Client Input 
 

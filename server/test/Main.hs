@@ -18,6 +18,7 @@ import Masna3.Server
 import Masna3.Server.Environment
 import Masna3.Server.Jobs.Types (AppRegistry)
 import Masna3.Test.File qualified as File
+import Masna3.Test.Process qualified as Process
 import Masna3.Test.Utils
 
 main :: IO ()
@@ -46,10 +47,13 @@ main = do
 specs :: TestEnv -> [TestTree]
 specs env =
   [ File.spec env
+  , Process.spec env
   ]
 
 cleanUp :: (IOE :> es, WithConnection :> es) => Eff es ()
 cleanUp = do
+  void $ execute_ "DELETE FROM processes"
   void $ execute_ "DELETE FROM files"
   void $ execute_ "DELETE FROM owners"
+  void $ execute_ "DELETE FROM archived_processes"
   void $ execute_ "DELETE FROM archived_files"

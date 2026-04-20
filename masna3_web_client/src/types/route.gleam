@@ -7,6 +7,9 @@ pub type Route {
   RegisterFile
   ConfirmFile
   DeleteFile
+  RegisterProcess
+  CompleteProcess
+  CancelProcess
   NotFound(uri: uri.Uri)
 }
 
@@ -16,9 +19,12 @@ pub type Route {
 pub fn href(route: Route) -> Attribute(msg) {
   let url = case route {
     Index -> "/"
-    RegisterFile -> "/register_file"
-    ConfirmFile -> "/confirm_file"
-    DeleteFile -> "/delete_file"
+    RegisterFile -> "/file/register"
+    ConfirmFile -> "/file/confirm"
+    DeleteFile -> "/file/delete"
+    RegisterProcess -> "/process/register"
+    CompleteProcess -> "/process/complete"
+    CancelProcess -> "/process/cancel"
     NotFound(_) -> "/404"
   }
 

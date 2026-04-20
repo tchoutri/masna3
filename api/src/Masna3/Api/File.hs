@@ -7,26 +7,29 @@ import Servant.API
 
 import Masna3.Api.File.FileId
 import Masna3.Api.Owner.OwnerId
+import Masna3.Api.Process.ProcessId
 
 data FileRegistrationForm = FileRegistrationForm
   { fileName :: Text
   , ownerId :: OwnerId
   , mimeType :: Text
+  , processId :: Maybe ProcessId
   }
   deriving stock (Eq, Generic, Ord, Show)
   deriving
     (FromJSON, ToJSON)
-    via (CustomJSON '[FieldLabelModifier '[CamelToSnake], SumObjectWithSingleField])
+    via (CustomJSON '[OmitNothingFields, FieldLabelModifier '[CamelToSnake], SumObjectWithSingleField])
           FileRegistrationForm
 
 data FileRegistrationResult = FileRegistrationResult
   { fileId :: FileId
   , url :: Text
+  , processId :: Maybe ProcessId
   }
   deriving stock (Eq, Generic, Ord, Show)
   deriving
     (FromJSON, ToJSON)
-    via (CustomJSON '[FieldLabelModifier '[CamelToSnake], SumObjectWithSingleField])
+    via (CustomJSON '[OmitNothingFields, FieldLabelModifier '[CamelToSnake], SumObjectWithSingleField])
           FileRegistrationResult
 
 data UploadCancellationForm = UploadCancellationForm

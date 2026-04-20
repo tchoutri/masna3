@@ -1,6 +1,6 @@
 import components/rsvp_error
 import components/validation_error
-import domain/confirm_file.{UserChangedFileId, UserSubmittedForm}
+import domain/file/confirm_file.{UserChangedFileId, UserSubmittedForm}
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}

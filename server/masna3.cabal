@@ -67,7 +67,8 @@ library
     Masna3.Server.Effects
     Masna3.Server.Environment
     Masna3.Server.Error
-    Masna3.Server.File
+    Masna3.Server.File.Guards
+    Masna3.Server.File.Handler
     Masna3.Server.Jobs.Types
     Masna3.Server.Model.File.Query
     Masna3.Server.Model.File.Types
@@ -75,6 +76,12 @@ library
     Masna3.Server.Model.Owner.Query
     Masna3.Server.Model.Owner.Types
     Masna3.Server.Model.Owner.Update
+    Masna3.Server.Model.Process.Query
+    Masna3.Server.Model.Process.Types
+    Masna3.Server.Model.Process.Update
+    Masna3.Server.Owner.Guards
+    Masna3.Server.Process.Guards
+    Masna3.Server.Process.Handler
 
   build-depends:
     aeson,
@@ -163,6 +170,7 @@ test-suite masna3-test
   -- cabal-gild: discover test --exclude "test/Main.hs"
   other-modules:
     Masna3.Test.File
+    Masna3.Test.Process
     Masna3.Test.Utils
 
   build-depends:

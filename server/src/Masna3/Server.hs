@@ -12,6 +12,7 @@ import Effectful.Time
 import Log (Logger)
 import Masna3.Api
 import Masna3.Api.File
+import Masna3.Api.Process
 import Network.HTTP.Types.Method (methodDelete, methodGet, methodOptions, methodPost)
 import Network.Wai.Handler.Warp
 import Network.Wai.Log qualified as WaiLog
@@ -24,7 +25,8 @@ import Servant.Server.Generic
 import Masna3.Server.Effects
 import Masna3.Server.Environment
 import Masna3.Server.Error
-import Masna3.Server.File
+import Masna3.Server.File.Handler qualified as File
+import Masna3.Server.Process.Handler qualified as Process
 
 runMasna3
   :: IOE :> es
@@ -89,15 +91,24 @@ apiServer :: ServerT (NamedRoutes APIRoutes) (Eff RouteEffects)
 apiServer =
   APIRoutes
     { files = fileServer
+    , processes = processServer
     }
 
 fileServer :: ServerT (NamedRoutes FileRoutes) (Eff RouteEffects)
 fileServer =
   FileRoutes
-    { register = registerHandler
-    , confirm = confirmHandler
-    , cancel = cancelHandler
-    , delete = deleteHandler
+    { register = File.registerHandler
+    , confirm = File.confirmHandler
+    , cancel = File.cancelHandler
+    , delete = File.deleteHandler
+    }
+
+processServer :: ServerT (NamedRoutes ProcessRoutes) (Eff RouteEffects)
+processServer =
+  ProcessRoutes
+    { register = Process.registerHandler
+    , complete = Process.completeHandler
+    , cancel = Process.cancelHandler
     }
 
 handleMasna3Error :: Log :> es => Masna3Error -> Eff es (Either ServerError a)

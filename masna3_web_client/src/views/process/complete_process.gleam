@@ -1,6 +1,6 @@
 import components/rsvp_error
 import components/validation_error
-import domain/file/delete_file.{UserChangedFileId, UserSubmittedForm}
+import domain/process/complete_process.{UserChangedProcessId, UserSubmittedForm}
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
@@ -9,17 +9,17 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import types/model.{type Model}
-import types/msg.{type Msg, DeleteFileMsg}
+import types/msg.{type Msg, CompleteProcessMsg}
 
 pub fn view(model: Model) -> List(Element(Msg)) {
   [
     html.div([attribute.class("w-full flex items-center flex-col")], [
-      html.h2([attribute.class("mb-4")], [html.text("Delete File")]),
-      case list.is_empty(model.delete_file.validation_errors) {
+      html.h2([attribute.class("mb-4")], [html.text("Complete Process")]),
+      case list.is_empty(model.complete_process.validation_errors) {
         True -> element.none()
-        False -> validation_error.view(model.delete_file.validation_errors)
+        False -> validation_error.view(model.complete_process.validation_errors)
       },
-      case model.delete_file.delete_file_response {
+      case model.complete_process.complete_process_response {
         Some(Ok(s)) ->
           html.div(
             [
@@ -29,7 +29,7 @@ pub fn view(model: Model) -> List(Element(Msg)) {
             ],
             [
               html.h3([attribute.class("underline text-center")], [
-                html.text("File deleted"),
+                html.text("Process completed"),
               ]),
               html.p([], [html.text("Status: " <> int.to_string(s.status))]),
               html.p([], [html.text("Body: " <> s.body)]),
@@ -44,7 +44,7 @@ pub fn view(model: Model) -> List(Element(Msg)) {
               ),
             ],
           )
-        Some(Error(err)) -> rsvp_error.view(err, "File not deleted")
+        Some(Error(err)) -> rsvp_error.view(err, "Process not completed")
         None -> element.none()
       },
       html.form(
@@ -55,15 +55,15 @@ pub fn view(model: Model) -> List(Element(Msg)) {
         [
           html.div([attribute.class("flex flex-col gap-1")], [
             html.label([attribute.class("text-sm text-neutral-600")], [
-              html.text("File ID"),
+              html.text("Process ID"),
             ]),
             html.input([
-              attribute.id("file_id"),
+              attribute.id("process_id"),
               attribute.class(
                 "p-2 border border-neutral-300 rounded-md focus:outline-none focus:border-neutral-400 text-sm",
               ),
               event.on_input(fn(value) {
-                DeleteFileMsg(UserChangedFileId(value))
+                CompleteProcessMsg(UserChangedProcessId(value))
               }),
             ]),
           ]),
@@ -74,7 +74,7 @@ pub fn view(model: Model) -> List(Element(Msg)) {
                 "px-4 py-3 rounded-md border border-neutral-300 hover:border-neutral-400 hover:bg-neutral-100 text-sm font-medium text-neutral-800 cursor-pointer",
               ),
             ],
-            [html.text("Delete File")],
+            [html.text("Complete Process")],
           ),
         ],
       ),
@@ -83,5 +83,5 @@ pub fn view(model: Model) -> List(Element(Msg)) {
 }
 
 fn handle_submit(_) -> Msg {
-  DeleteFileMsg(UserSubmittedForm)
+  CompleteProcessMsg(UserSubmittedForm)
 }

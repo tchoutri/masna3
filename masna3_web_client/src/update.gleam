@@ -1,11 +1,15 @@
 import lustre/effect.{type Effect}
 
-import domain/confirm_file
-import domain/delete_file
-import domain/register_file
+import domain/file/confirm_file
+import domain/file/delete_file
+import domain/file/register_file
+import domain/process/cancel_process
+import domain/process/complete_process
+import domain/process/register_process
 import types/model.{type Model, Model}
 import types/msg.{
-  type Msg, ConfirmFileMsg, DeleteFileMsg, RegisterFileMsg, UserNavigatedTo,
+  type Msg, CancelProcessMsg, CompleteProcessMsg, ConfirmFileMsg, DeleteFileMsg,
+  RegisterFileMsg, RegisterProcessMsg, UserNavigatedTo,
 }
 
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -41,6 +45,36 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       #(
         Model(..model, delete_file: new_delete_file_model),
         effect.map(delete_file_effect, DeleteFileMsg),
+      )
+    }
+
+    RegisterProcessMsg(register_msg) -> {
+      let #(new_register_process_model, register_process_effect) =
+        register_process.update(model.register_process, register_msg)
+
+      #(
+        Model(..model, register_process: new_register_process_model),
+        effect.map(register_process_effect, RegisterProcessMsg),
+      )
+    }
+
+    CompleteProcessMsg(complete_msg) -> {
+      let #(new_complete_process_model, complete_process_effect) =
+        complete_process.update(model.complete_process, complete_msg)
+
+      #(
+        Model(..model, complete_process: new_complete_process_model),
+        effect.map(complete_process_effect, CompleteProcessMsg),
+      )
+    }
+
+    CancelProcessMsg(cancel_msg) -> {
+      let #(new_cancel_process_model, cancel_process_effect) =
+        cancel_process.update(model.cancel_process, cancel_msg)
+
+      #(
+        Model(..model, cancel_process: new_cancel_process_model),
+        effect.map(cancel_process_effect, CancelProcessMsg),
       )
     }
   }

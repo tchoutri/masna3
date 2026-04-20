@@ -4,6 +4,7 @@
 module Masna3.Server.Model.File.Query
   ( getFileById
   , listExpiredFiles
+  , queryOne
   ) where
 
 import Data.Set (Set)
@@ -37,6 +38,7 @@ listExpiredFiles timestamp = do
       [sql|
           SELECT file_id
                , owner_id
+               , process_id
                , filename
                , path
                , status

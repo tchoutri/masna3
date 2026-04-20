@@ -23,6 +23,7 @@ import Effectful.Time qualified as Time
 import GHC.Generics
 import Masna3.Api.File.FileId
 import Masna3.Api.Owner.OwnerId
+import Masna3.Api.Process.ProcessId
 
 data Status
   = Pending
@@ -32,6 +33,7 @@ data Status
 data File = File
   { fileId :: FileId
   , ownerId :: OwnerId
+  , processId :: Maybe ProcessId
   , filename :: Text
   , path :: Text
   , status :: Status
@@ -48,6 +50,7 @@ instance Entity File where
   fields =
     [ [field| file_id |]
     , [field| owner_id |]
+    , [field| process_id |]
     , [field| filename |]
     , [field| path |]
     , [field| status |]
@@ -82,6 +85,8 @@ newFile
   :: (IOE :> es, Time :> es)
   => OwnerId
   -- ^ Owner
+  -> Maybe ProcessId
+  -- ^ Maybe Process
   -> Text
   -- ^ File name
   -> BucketName
@@ -89,7 +94,7 @@ newFile
   -> Text
   -- ^ MIME type
   -> Eff es File
-newFile ownerId filename bucket mimetype = do
+newFile ownerId processId filename bucket mimetype = do
   fileId <- newFileId
   createdAt <- Time.currentTime
   let path = display ownerId <> "/" <> display fileId <> "/" <> filename
@@ -97,6 +102,7 @@ newFile ownerId filename bucket mimetype = do
     File
       { fileId
       , ownerId
+      , processId
       , filename
       , path
       , status = Pending
@@ -130,6 +136,7 @@ instance FromField Status' where
 data File' = File'
   { fileId :: FileId
   , ownerId :: OwnerId
+  , processId :: Maybe ProcessId
   , filename :: Text
   , path :: Text
   , status' :: Status'

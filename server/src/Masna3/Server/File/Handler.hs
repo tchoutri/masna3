@@ -1,4 +1,4 @@
-module Masna3.Server.File where
+module Masna3.Server.File.Handler where
 
 import Data.Aeson
 import Data.Text.Encoding qualified as Text
@@ -9,27 +9,30 @@ import Effectful.Reader.Static qualified as Reader
 import Effectful.Time qualified as Time
 import Masna3.Api.File
 import Masna3.Api.File.FileId
-import Masna3.Api.Owner.OwnerId (OwnerId)
 import Servant.API.ContentTypes
 
 import Masna3.Server.AWS.URL
 import Masna3.Server.Database
 import Masna3.Server.Effects
 import Masna3.Server.Environment
-import Masna3.Server.Error (FileNotFound (..), InvalidTransitionError (..), Masna3Error (..), MkInvalidTransitionFile (..), OwnerNotFound (..))
-import Masna3.Server.Model.File.Query qualified as Query
+import Masna3.Server.Error
+import Masna3.Server.File.Guards
 import Masna3.Server.Model.File.Types
 import Masna3.Server.Model.File.Update qualified as Update
-import Masna3.Server.Model.Owner.Query (getOwnerById)
-import Masna3.Server.Model.Owner.Types (Owner)
+import Masna3.Server.Model.Process.Types as ProcessTypes
+import Masna3.Server.Model.Process.Update qualified as ProcessUpdate
+import Masna3.Server.Owner.Guards
+import Masna3.Server.Process.Guards
 
 registerHandler :: FileRegistrationForm -> Eff RouteEffects FileRegistrationResult
 registerHandler form = do
   Masna3Env{awsBucket} <- Reader.ask
-  guardThatOwnerExists form.ownerId
+  void $ guardThatOwnerExists form.ownerId
+  traverse_ guardThatProcessCompleted form.processId
   file <-
     newFile
       form.ownerId
+      form.processId
       form.fileName
       awsBucket
       form.mimeType
@@ -40,17 +43,10 @@ registerHandler form = do
         awsBucket
         form.mimeType
         path
-  withPool (Update.insertFile file)
-  pure FileRegistrationResult{fileId = file.fileId, url}
-
-guardThatOwnerExists :: OwnerId -> Eff RouteEffects Owner
-guardThatOwnerExists ownerId = do
-  maybeOwner <- withPool (getOwnerById ownerId)
-  case maybeOwner of
-    Nothing ->
-      Log.localData ["owner_id" .= ownerId] $
-        Error.throwError (OwnerNotFoundError (OwnerNotFound ownerId))
-    Just owner -> pure owner
+  withPool $ do
+    Update.insertFile file
+    traverse_ (`ProcessUpdate.updateProcessStatus` ProcessTypes.InProgress) form.processId
+  pure FileRegistrationResult{fileId = file.fileId, url, processId = form.processId}
 
 confirmHandler :: FileId -> Eff RouteEffects NoContent
 confirmHandler fileId = do
@@ -63,15 +59,6 @@ confirmHandler fileId = do
     _ ->
       Log.localData ["file_id" .= fileId] $
         Error.throwError (InvalidTransition (NotPendingToUploaded (MkInvalidTransitionFile fileId)))
-
-guardThatFileExists :: FileId -> Eff RouteEffects File
-guardThatFileExists fileId = do
-  maybeFile <- withPool (Query.getFileById fileId)
-  case maybeFile of
-    Nothing ->
-      Log.localData ["file_id" .= fileId] $
-        Error.throwError (FileNotFoundError (FileNotFound fileId))
-    Just file -> pure file
 
 cancelHandler :: FileId -> UploadCancellationForm -> Eff es NoContent
 cancelHandler _ _ = pure NoContent
