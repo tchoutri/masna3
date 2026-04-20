@@ -1,6 +1,8 @@
 module Main where
 
+import Arbiter.Migrations qualified as Mig
 import Control.Concurrent.MVar.Strict qualified as IOMVar
+import Data.Proxy
 import Data.Word
 import Effectful
 import Effectful.Concurrent.Async
@@ -14,6 +16,7 @@ import Test.Tasty
 
 import Masna3.Server
 import Masna3.Server.Environment
+import Masna3.Server.Jobs.Types (AppRegistry)
 import Masna3.Test.File qualified as File
 import Masna3.Test.Utils
 
@@ -23,6 +26,7 @@ main = do
   semaphore <- IOMVar.newEmptyMVar'
   let testEnv = testEnv'{logSemaphore = semaphore}
   serverEnv <- runEff getMasna3Env
+  Mig.runMigrationsForRegistry (Proxy @AppRegistry) serverEnv.connString "public" Mig.defaultMigrationConfig
   runEff . Reader.runReader testEnv $ withTestPool cleanUp
   let server = Log.withStdOutLogger $ \logger -> do
         loggingMiddleware <- Log.runLog "masna3-test-server" logger Log.defaultLogLevel WaiLog.mkLogMiddleware

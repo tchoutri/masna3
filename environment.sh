@@ -9,6 +9,8 @@ export MASNA3_DB_DATABASE="masna3_dev"
 export MASNA3_DB_CONNSTRING="host=${MASNA3_DB_HOST} dbname=${MASNA3_DB_DATABASE} port=${MASNA3_DB_PORT} \
   user=${MASNA3_DB_USER} password=${MASNA3_DB_PASSWORD}"
 
+export JOBS_DB_CONNSTRING=$MASNA3_DB_CONNSTRING
+
 # Number of connections across all sub-pools
 export MASNA3_DB_POOL_CONNECTIONS="50"
 #Timeout for each connection

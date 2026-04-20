@@ -11,6 +11,7 @@ services:
         - GID=${GID}
     ports:
       - "8085:8085"
+      - "8086:8086"
     volumes:
       - $SOURCE_DIRECTORY:/home/$USER/masna3:Z,U
       - database-data:/home/$USER/masna3/pgdata

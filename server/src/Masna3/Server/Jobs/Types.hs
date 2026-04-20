@@ -1,9 +1,9 @@
 module Masna3.Server.Jobs.Types where
 
-import BackgroundJobs.Poller
-import BackgroundJobs.Poller qualified as Poller
-import BackgroundJobs.Worker
+import Arbiter.Core qualified as Arb
+import Arbiter.Simple qualified as ArbS
 import Data.Aeson
+import Data.Time (UTCTime)
 import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.Newtypes
 import Database.PostgreSQL.Simple.ToField
@@ -19,6 +19,10 @@ import Masna3.Server.Model.File.Query qualified as Query
 import Masna3.Server.Model.File.Types
 import Masna3.Server.Model.File.Update qualified as Update
 
+type AppRegistry =
+  '[ '("file_queue", Masna3Job)
+   ]
+
 data Masna3Job
   = PurgeExpiredFiles
   deriving stock (Eq, Generic, Ord, Show)
@@ -30,22 +34,26 @@ data Masna3Job
     (FromField, ToField)
     via Aeson Masna3Job
 
-pollerConfig :: Log :> es => PollerConfig (Eff es)
-pollerConfig = Poller.mkPollerConfig "masna3_jobs"
+insertDelayedJob
+  :: MonadUnliftIO m
+  => ArbS.SimpleEnv AppRegistry
+  -> UTCTime
+  -> Masna3Job
+  -> m (Maybe (Arb.JobRead Masna3Job))
+insertDelayedJob env time masna3Job = ArbS.runSimpleDb env $ do
+  let arbJob = Arb.defaultJob masna3Job
+  Arb.insertJob (arbJob{Arb.notVisibleUntil = Just time})
 
-workerConfig
-  :: ( IOE :> es
-     , Log :> es
-     , Time :> es
-     , WithConnection :> es
-     )
-  => WorkerConfig (Eff es) Masna3Job
-workerConfig =
-  WorkerConfig
-    { queueName = "masna3_jobs"
-    , onException = \j e -> error $ "Caught exception while processing Job \"" <> show j <> "\": " <> show e
-    , process = processJob
-    }
+processArbiterJob
+  :: Log.Logger
+  -> Arb.JobHandler (ArbS.SimpleDb AppRegistry IO) Masna3Job ()
+processArbiterJob logger conn job = do
+  liftIO
+    . runEff
+    . Log.runLog "background-jobs" logger Log.defaultLogLevel
+    . Time.runTime
+    . runWithConnection conn
+    $ processJob (Arb.payload job)
 
 processJob
   :: ( IOE :> es

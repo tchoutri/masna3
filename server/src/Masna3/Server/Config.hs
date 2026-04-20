@@ -83,6 +83,7 @@ data TestConfig = TestConfig
 data TestEnv = TestEnv
   { httpPort :: Word16
   , pool :: Pool PG.Connection
+  , connString :: StrictByteString
   , logSemaphore :: MVar' ()
   -- ^ Used to display one set of log entries at a time
   }
