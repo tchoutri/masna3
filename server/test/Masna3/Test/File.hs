@@ -1,5 +1,6 @@
 module Masna3.Test.File where
 
+import Arbiter.Core qualified as Arb
 import Arbiter.Simple qualified as ArbS
 import Arbiter.Worker qualified as Worker
 import Data.Proxy
@@ -99,6 +100,8 @@ testUnconfirmedFileGetsTrashed = do
   result <- assertRight "Register file" =<< runRequest (Client.registerFile form)
   arbiterEnv <- ArbS.createSimpleEnv (Proxy @TestQueue) env.connString "public"
   arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob logger)
+  let arbJob = Arb.defaultJob PurgeExpiredFiles
+  void $ ArbS.runSimpleDb arbiterEnv (Arb.insertJob arbJob)
   Async.race_
     (liftIO $ ArbS.runSimpleDb arbiterEnv $ Worker.runWorkerPool arbiterWorkerConfig)
     ( do

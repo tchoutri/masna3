@@ -40,9 +40,9 @@ insertDelayedJob
   -> UTCTime
   -> Masna3Job
   -> m (Maybe (Arb.JobRead Masna3Job))
-insertDelayedJob env time job = ArbS.runSimpleDb env $ do
-  let job = Arb.defaultJob PurgeExpiredFiles
-  Arb.insertJob (job{Arb.notVisibleUntil = Just time})
+insertDelayedJob env time masna3Job = ArbS.runSimpleDb env $ do
+  let arbJob = Arb.defaultJob masna3Job
+  Arb.insertJob (arbJob{Arb.notVisibleUntil = Just time})
 
 processArbiterJob
   :: Log.Logger

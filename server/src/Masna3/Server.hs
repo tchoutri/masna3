@@ -4,8 +4,6 @@ import Auth.Biscuit.Servant
 import Data.Aeson (encode)
 import Data.Proxy
 import Effectful
-import Effectful.Concurrent
-import Effectful.Dispatch.Static (unsafeEff_)
 import Effectful.Error.Static
 import Effectful.Log (Log, (.=))
 import Effectful.Log qualified as Log
@@ -27,10 +25,9 @@ import Masna3.Server.Effects
 import Masna3.Server.Environment
 import Masna3.Server.Error
 import Masna3.Server.File
-import Masna3.Server.Jobs.Types
 
 runMasna3
-  :: (Concurrent :> es, IOE :> es)
+  :: IOE :> es
   => Logger
   -> Masna3Env
   -> Eff es ()
