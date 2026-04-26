@@ -14,7 +14,6 @@ import Effectful.Concurrent.Async
 import Effectful.Console.ByteString
 import Effectful.Console.ByteString qualified as Console
 import Effectful.Dispatch.Static
-import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static
 import Effectful.Time
