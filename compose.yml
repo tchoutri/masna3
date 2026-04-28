@@ -24,7 +24,7 @@ services:
     init: true
 
   masna3-database:
-    image: docker.io/library/postgres:17.5
+    image: docker.io/library/postgres:18
     container_name: masna3-database
     user: postgres
     healthcheck:
@@ -39,7 +39,7 @@ services:
     env_file:
       - database.env
     volumes:
-      - database-data:/var/lib/postgresql/data
+      - database-data:/var/lib/postgresql/docker
     profiles:
       - local
 
