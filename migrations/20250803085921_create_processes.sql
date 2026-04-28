@@ -8,4 +8,4 @@ CREATE TABLE processes (
   , updated_at timestamptz
 );
 
-CREATE INDEX ON processes (status) WHERE status IN ('started', 'in_progress');
+CREATE INDEX ON processes (status) WHERE status = 'started' or status = 'in_progress';
