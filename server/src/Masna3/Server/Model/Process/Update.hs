@@ -6,21 +6,23 @@ module Masna3.Server.Model.Process.Update where
 import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ (sql)
 import Effectful
+import Effectful.Labeled
 import Effectful.PostgreSQL
 import Effectful.Time (Time)
 import Effectful.Time qualified as Time
 import Masna3.Api.ArchivedProcess.ArchivedProcessId
 import Masna3.Api.Process.ProcessId (ProcessId)
 
+import Masna3.Database
 import Masna3.Server.Model.Process.Types
 
-insertProcess :: (IOE :> es, WithConnection :> es) => Process -> Eff es ()
-insertProcess process = void $ execute (_insert @Process) process
+insertProcess :: (IOE :> es, Labeled ReadWrite WithConnection :> es) => Process -> Eff es ()
+insertProcess process = void $ labeled @ReadWrite @WithConnection $ execute (_insert @Process) process
 
-updateProcessStatus :: (IOE :> es, Time :> es, WithConnection :> es) => ProcessId -> Status -> Eff es ()
+updateProcessStatus :: (IOE :> es, Labeled ReadWrite WithConnection :> es, Time :> es) => ProcessId -> Status -> Eff es ()
 updateProcessStatus processId status = do
   timestamp <- Time.currentTime
-  void $ execute q (status, timestamp, processId)
+  void $ labeled @ReadWrite @WithConnection $ execute q (status, timestamp, processId)
   where
     q =
       [sql|
@@ -28,11 +30,11 @@ updateProcessStatus processId status = do
         WHERE process_id = ?;
        |]
 
-cancelProcess :: (IOE :> es, Time :> es, WithConnection :> es) => ProcessId -> Eff es ()
+cancelProcess :: (IOE :> es, Labeled ReadWrite WithConnection :> es, Time :> es) => ProcessId -> Eff es ()
 cancelProcess processId = do
   timestamp <- Time.currentTime
   archivedProcessId <- newArchivedProcessId
-  void $ execute q (processId, processId, archivedProcessId, timestamp)
+  void $ labeled @ReadWrite @WithConnection $ execute q (processId, processId, archivedProcessId, timestamp)
   where
     q =
       [sql|

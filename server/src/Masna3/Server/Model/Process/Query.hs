@@ -12,16 +12,26 @@ import Database.PostgreSQL.Entity.Internal.QQ
 import Database.PostgreSQL.Simple.SqlQQ (sql)
 import Database.PostgreSQL.Simple.Types
 import Effectful
+import Effectful.Labeled
 import Effectful.PostgreSQL
 import Masna3.Api.Process.ProcessId
 
+import Masna3.Database
 import Masna3.Server.Model.File.Query (queryOne)
 import Masna3.Server.Model.Process.Types
 
-getProcessById :: (IOE :> es, WithConnection :> es) => ProcessId -> Eff es (Maybe Process)
+getProcessById
+  :: ( IOE :> es
+     , Labeled ReadOnly WithConnection :> es
+     )
+  => ProcessId -> Eff es (Maybe Process)
 getProcessById processId = queryOne (_selectWhere @Process [[field| process_id |]]) (Only processId)
 
-getLiveProcessById :: (IOE :> es, WithConnection :> es) => ProcessId -> Eff es (Maybe Process)
+getLiveProcessById
+  :: ( IOE :> es
+     , Labeled ReadOnly WithConnection :> es
+     )
+  => ProcessId -> Eff es (Maybe Process)
 getLiveProcessById processId =
   queryOne
     [sql|
@@ -31,8 +41,12 @@ getLiveProcessById processId =
   |]
     (Only processId)
 
-hasUnconfirmedFiles :: (IOE :> es, WithConnection :> es) => ProcessId -> Eff es Bool
-hasUnconfirmedFiles processId = do
+hasUnconfirmedFiles
+  :: ( IOE :> es
+     , Labeled ReadOnly WithConnection :> es
+     )
+  => ProcessId -> Eff es Bool
+hasUnconfirmedFiles processId = labeled @ReadOnly @WithConnection $ do
   result <- query q (Only processId)
   pure $ maybe False fromOnly (listToMaybe result)
   where

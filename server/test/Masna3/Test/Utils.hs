@@ -1,7 +1,6 @@
 module Masna3.Test.Utils
   ( TestEff
   , TestEnv (..)
-  , withTestPool
   , testThis
   , assertEqual
   , assertFailure
@@ -24,6 +23,7 @@ import Effectful.Concurrent.MVar.Strict qualified as MVar
 import Effectful.Error.Static (Error)
 import Effectful.Error.Static qualified as Error
 import Effectful.Exception
+import Effectful.Labeled
 import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.PostgreSQL (WithConnection)
@@ -41,6 +41,7 @@ import Servant.Client
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit qualified as Test
 
+import Masna3.Database
 import Masna3.Server.Config
 import Masna3.Server.Environment
 import Masna3.Server.Error
@@ -55,15 +56,6 @@ type TestEff a =
      , IOE
      ]
     a
-
-withTestPool
-  :: forall a es
-   . (IOE :> es, Reader TestEnv :> es)
-  => Eff (WithConnection ': es) a -> Eff es a
-withTestPool action = do
-  TestEnv{pool} <- Reader.ask
-  DB.runWithConnectionPool pool $ do
-    DB.withTransaction action
 
 testThis :: TestEnv -> Text -> TestEff () -> TestTree
 testThis env name assertion = Test.testCase (Text.unpack name) $ do

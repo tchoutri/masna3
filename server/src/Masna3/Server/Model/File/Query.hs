@@ -17,20 +17,28 @@ import Database.PostgreSQL.Simple.SqlQQ (sql)
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types
 import Effectful
+import Effectful.Labeled
 import Effectful.PostgreSQL
 import GHC.Stack
 import Masna3.Api.File.FileId
 
+import Masna3.Database
 import Masna3.Server.Model.File.Types
 
-getFileById :: (IOE :> es, WithConnection :> es) => FileId -> Eff es (Maybe File)
-getFileById fileId = queryOne (_selectWhere @File [[field| file_id |]]) (Only fileId)
+getFileById
+  :: ( IOE :> es
+     , Labeled ReadOnly WithConnection :> es
+     )
+  => FileId -> Eff es (Maybe File)
+getFileById fileId =
+  labeled @ReadOnly @WithConnection $
+    queryOne (_selectWhere @File [[field| file_id |]]) (Only fileId)
 
 listExpiredFiles
-  :: (IOE :> es, WithConnection :> es)
+  :: (IOE :> es, Labeled ReadOnly WithConnection :> es)
   => UTCTime
   -> Eff es (Set File)
-listExpiredFiles timestamp = do
+listExpiredFiles timestamp = labeled @ReadOnly @WithConnection $ do
   result <- query q (Only timestamp)
   pure $ Set.fromList result
   where
@@ -53,8 +61,15 @@ listExpiredFiles timestamp = do
         |]
 
 queryOne
-  :: (FromRow result, HasCallStack, IOE :> es, ToRow params, WithConnection :> es)
+  :: ( FromRow result
+     , HasCallStack
+     , IOE :> es
+     , Labeled ReadOnly WithConnection :> es
+     , ToRow params
+     )
   => Query
   -> params
   -> Eff es (Maybe result)
-queryOne q params = listToMaybe <$> query q params
+queryOne q params =
+  labeled @ReadOnly @WithConnection $
+    listToMaybe <$> query q params

@@ -42,7 +42,7 @@ main = runEff . runConsole . runTime . runConcurrent $ do
     Log.withStdOutLogger $ \jobsLogger -> do
       Log.runLog "masna3-jobs" jobsLogger Log.defaultLogLevel $
         runTime $ do
-          arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob jobsLogger)
+          arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob env.pool jobsLogger)
           preflightChecks arbiterEnv
           withAsync (startJobs arbiterEnv arbiterWorkerConfig) $ \_ ->
             Log.withStdOutLogger $ \serverLogger -> do
