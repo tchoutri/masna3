@@ -11,8 +11,8 @@ import Masna3.Api.File
 import Masna3.Api.File.FileId
 import Servant.API.ContentTypes
 
+import Masna3.Database
 import Masna3.Server.AWS.URL
-import Masna3.Server.Database
 import Masna3.Server.Effects
 import Masna3.Server.Environment
 import Masna3.Server.Error
@@ -26,7 +26,7 @@ import Masna3.Server.Process.Guards
 
 registerHandler :: FileRegistrationForm -> Eff RouteEffects FileRegistrationResult
 registerHandler form = do
-  Masna3Env{awsBucket} <- Reader.ask
+  Masna3Env{awsBucket, pool} <- Reader.ask
   void $ guardThatOwnerExists form.ownerId
   traverse_ guardThatProcessCompleted form.processId
   file <-
@@ -43,18 +43,19 @@ registerHandler form = do
         awsBucket
         form.mimeType
         path
-  withPool $ do
+  withReadWritePool pool $ do
     Update.insertFile file
     traverse_ (`ProcessUpdate.updateProcessStatus` ProcessTypes.InProgress) form.processId
   pure FileRegistrationResult{fileId = file.fileId, url, processId = form.processId}
 
 confirmHandler :: FileId -> Eff RouteEffects NoContent
 confirmHandler fileId = do
+  Masna3Env{pool} <- Reader.ask
   file <- guardThatFileExists fileId
   case file.status of
     Pending -> do
       timestamp <- Time.currentTime
-      withPool (Update.confirmFile fileId timestamp)
+      withReadWritePool pool (Update.confirmFile fileId timestamp)
       pure NoContent
     _ ->
       Log.localData ["file_id" .= fileId] $
@@ -65,6 +66,7 @@ cancelHandler _ _ = pure NoContent
 
 deleteHandler :: FileId -> Eff RouteEffects NoContent
 deleteHandler fileId = do
+  Masna3Env{pool} <- Reader.ask
   void $ guardThatFileExists fileId
-  withPool (Update.deleteFile fileId)
+  withReadWritePool pool (Update.deleteFile fileId)
   pure NoContent

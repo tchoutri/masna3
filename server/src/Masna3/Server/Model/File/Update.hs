@@ -7,19 +7,21 @@ import Data.Time
 import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ (sql)
 import Effectful
+import Effectful.Labeled
 import Effectful.PostgreSQL
 import Effectful.Time (Time)
 import Effectful.Time qualified as Time
 import Masna3.Api.ArchivedFile.ArchivedFileId
 import Masna3.Api.File.FileId
 
+import Masna3.Database
 import Masna3.Server.Model.File.Types
 
-insertFile :: (IOE :> es, WithConnection :> es) => File -> Eff es ()
-insertFile file = void $ execute (_insert @File) file
+insertFile :: (IOE :> es, Labeled ReadWrite WithConnection :> es) => File -> Eff es ()
+insertFile file = void $ labeled @ReadWrite @WithConnection $ execute (_insert @File) file
 
-confirmFile :: (IOE :> es, WithConnection :> es) => FileId -> UTCTime -> Eff es ()
-confirmFile fileId timestamp = void $ execute q (timestamp, fileId)
+confirmFile :: (IOE :> es, Labeled ReadWrite WithConnection :> es) => FileId -> UTCTime -> Eff es ()
+confirmFile fileId timestamp = void $ labeled @ReadWrite @WithConnection $ execute q (timestamp, fileId)
   where
     q =
       [sql|
@@ -27,11 +29,11 @@ confirmFile fileId timestamp = void $ execute q (timestamp, fileId)
         WHERE file_id = ?;
        |]
 
-deleteFile :: (IOE :> es, Time :> es, WithConnection :> es) => FileId -> Eff es ()
+deleteFile :: (IOE :> es, Labeled ReadWrite WithConnection :> es, Time :> es) => FileId -> Eff es ()
 deleteFile fileId = do
   timestamp <- Time.currentTime
   archivedFileId <- newArchivedFileId
-  void $ execute q (fileId, archivedFileId, timestamp)
+  void $ labeled @ReadWrite @WithConnection $ execute q (fileId, archivedFileId, timestamp)
   where
     q =
       [sql|

@@ -13,6 +13,7 @@ import Masna3.Api.Client qualified as Client
 import Masna3.Api.File
 import Test.Tasty
 
+import Masna3.Database
 import Masna3.Server.Jobs.Types
 import Masna3.Server.Model.File.Query qualified as Query
 import Masna3.Server.Model.Owner.Types
@@ -37,8 +38,9 @@ spec env =
 
 testRegisterFile :: TestEff ()
 testRegisterFile = do
+  TestEnv{pool} <- Reader.ask
   owner <- newOwner "test-client"
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool pool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
       processId = Nothing
@@ -47,8 +49,9 @@ testRegisterFile = do
 
 testConfirmFile :: TestEff ()
 testConfirmFile = do
+  TestEnv{pool} <- Reader.ask
   owner <- newOwner "test-client-2"
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool pool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
       processId = Nothing
@@ -58,8 +61,9 @@ testConfirmFile = do
 
 testConfirmFileInvalidTransition :: TestEff ()
 testConfirmFileInvalidTransition = do
+  TestEnv{pool} <- Reader.ask
   owner <- newOwner "test-client-3"
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool pool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
       processId = Nothing
@@ -70,8 +74,9 @@ testConfirmFileInvalidTransition = do
 
 testDeleteFile :: TestEff ()
 testDeleteFile = do
+  TestEnv{pool} <- Reader.ask
   owner <- newOwner "test-client-4"
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool pool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
       processId = Nothing
@@ -82,8 +87,9 @@ testDeleteFile = do
 
 testDeleteFileInvalidTransition :: TestEff ()
 testDeleteFileInvalidTransition = do
+  TestEnv{pool} <- Reader.ask
   owner <- newOwner "test-client-5"
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool pool $ Update.insertOwner owner
   let fileName = "toto.txt"
       mimeType = "text/plain"
       processId = Nothing
@@ -98,21 +104,21 @@ testUnconfirmedFileGetsTrashed = do
   env <- Reader.ask
   owner <- newOwner "test-client-6"
   logger <- leLogger <$> getLoggerEnv
-  withTestPool $ Update.insertOwner owner
+  withReadWritePool env.pool $ Update.insertOwner owner
   let fileName = "file-to-delete.txt"
       mimeType = "text/plain"
       processId = Nothing
   let form = FileRegistrationForm fileName owner.ownerId mimeType processId
   result <- assertRight "Register file" =<< runRequest (Client.registerFile form)
   arbiterEnv <- ArbS.createSimpleEnv (Proxy @TestQueue) env.connString "public"
-  arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob logger)
+  arbiterWorkerConfig <- Worker.defaultWorkerConfig env.connString 5 (processArbiterJob env.pool logger)
   let arbJob = Arb.defaultJob PurgeExpiredFiles
   void $ ArbS.runSimpleDb arbiterEnv (Arb.insertJob arbJob)
   Async.race_
     (liftIO $ ArbS.runSimpleDb arbiterEnv $ Worker.runWorkerPool arbiterWorkerConfig)
     ( do
         threadDelay 500_000
-        r <- withTestPool (Query.getFileById result.fileId)
+        r <- withReadOnlyPool env.pool $ Query.getFileById result.fileId
         case r of
           Nothing -> pure ()
           Just file -> assertFailure $ "Found the file in the files table! " <> show file

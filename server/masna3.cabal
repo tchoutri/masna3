@@ -19,6 +19,7 @@ common extensions
     DeriveAnyClass
     DerivingVia
     DuplicateRecordFields
+    NoFieldSelectors
     NoStarIsType
     OverloadedLabels
     OverloadedRecordDot
@@ -60,10 +61,10 @@ library
   import: ghc-options
   -- cabal-gild: discover src
   exposed-modules:
+    Masna3.Database
     Masna3.Server
     Masna3.Server.AWS.URL
     Masna3.Server.Config
-    Masna3.Server.Database
     Masna3.Server.Effects
     Masna3.Server.Environment
     Masna3.Server.Error
